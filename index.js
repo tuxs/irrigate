@@ -1,10 +1,10 @@
 const TelegramBot = require('node-telegram-bot-api');
-const token = '889153866:AAEMvVUPI4xNikUcwnyndcigO03PgLIMUnY';//Cambiar por el token de telegram
+const token = '889153866:AAEMvVUPI4xNikUcwnyndcigO03PgLIMUnY'; //Cambiar por el token de telegram
 const bot = new TelegramBot(token, {
   polling: true
 });
 
-var IdMiChat = 714112464;//cambiar por tu ID del chat
+var IdMiChat = 714112464; //cambiar por tu ID del chat
 
 var SerialPort = require('serialport');
 var MiPuerto = new SerialPort('/dev/ttyACM0', {
@@ -20,29 +20,42 @@ bot.on('message', (msg) => {
     console.log("Regando....");
     bot.sendMessage(chatId, 'Regando....');
     MiPuerto.write("H");
-  } /*else if (Mensaje != "Regar") {
-    console.log("Instruccion no reconocida");
-    bot.sendMessage(chatId, 'Instruccion no reconocida');*/
+  }
+  /*else if (Mensaje != "Regar") {
+     console.log("Instruccion no reconocida");
+     bot.sendMessage(chatId, 'Instruccion no reconocida');*/
   else if (Mensaje == "Temperatura") {
     console.log("Temperatura");
-    bot.sendMessage(IdMiChat, 'Temperatura actual: ' + MiPuerto.write('T'));
     MiPuerto.write("T");
-  }  else{
-      console.log("Instruccion no Valida");
-      bot.sendMessage(IdMiChat, 'Instruccion no Valida');
-    }
+  } else {
+    console.log("Instruccion no Valida");
+    bot.sendMessage(IdMiChat, 'Instruccion no Valida');
+  }
 });
 
 
 MiPuerto.setEncoding('utf8');
 
+let Mensaje = "";
+let Buscar = false;
+
 MiPuerto.on('data', function(data) {
+
   console.log("Lo que entro es " + data);
-  if (data[0] == 'H') {
-    console.log("Riego Manual Activado");
-    bot.sendMessage(IdMiChat, 'Riego Manual Activado');
-  }else if(data[0] == 'T') {
-      console.log("Temperatura es" + data);
-      bot.sendMessage(IdMiChat, "Temperatura es");
+  for (var i = 0; i < data.length; i++) {
+    if (data[i] == 'H') {
+      console.log("Riego Manual Activado");
+      bot.sendMessage(IdMiChat, 'Riego Manual Activado');
+    } else if (data[i] == 'M') {
+      console.log("Empezando a llegar mensaje");
+      Mensaje = "";
+      Buscar = true;
+      //  bot.sendMessage(IdMiChat, "Temperatura es");
+    } else if (data[i] == 'X') {
+      bot.sendMessage(IdMiChat, "Estado actual " + Mensaje);
+      Buscar = false;
+    } else if (Buscar) {
+      Mensaje = Mensaje + data[i];
     }
+  }
 });
