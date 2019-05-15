@@ -20,11 +20,7 @@ bot.on('message', (msg) => {
     console.log("Regando....");
     bot.sendMessage(chatId, 'Regando....');
     MiPuerto.write("H");
-  }
-  /*else if (Mensaje != "Regar") {
-     console.log("Instruccion no reconocida");
-     bot.sendMessage(chatId, 'Instruccion no reconocida');*/
-  else if (Mensaje == "Temperatura") {
+  } else if (Mensaje == "Temperatura") {
     console.log("Temperatura");
     MiPuerto.write("T");
   } else {
@@ -54,6 +50,8 @@ MiPuerto.on('data', function(data) {
     } else if (data[i] == 'X') {
       bot.sendMessage(IdMiChat, "Estado actual " + Mensaje);
       Buscar = false;
+    } else if (data[i] == "P") {
+      bot.sendMessage(IdMiChat, "Termino de Regar");
     } else if (Buscar) {
       Mensaje = Mensaje + data[i];
     }
