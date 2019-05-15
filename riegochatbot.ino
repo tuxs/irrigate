@@ -210,7 +210,27 @@ void loop() {
       digitalWrite(4, LOW);
       } 
 
+//DATOS DE COMUNICACION ENTRE TELEGRAM Y ARDUINO
+
+  //Recogemos datos del sensor y la procesamos
+  Temperatura = analogRead(A0);
+  gradosCentigrados = ((5*Temperatura*10)/1024);
+  //Serial.println(gradosCentigrados);
+
+/*  if (Serial.available()>=0) {
+    int temp = Serial.read();
+    if (temp == 'T') {
+    Serial.println(gradosCentigrados);
+    }
+  }
+*/
+ 
+
 //Codigo del Chatbot
+if(digitalRead(pinPulsador)){
+  Serial.println("H");
+  }
+  
   if (Serial.available()) {
     char Letra = Serial.read();
     if (Letra == 'H') {
@@ -222,25 +242,10 @@ void loop() {
       lcd.setCursor(0,0);
       lcd.print(" Regando....");
       delay(duracionRiego);
-    }
-    else if (Letra != 'H') {
-      lcd.backlight();
-      lcd.setCursor(0,0);
-      lcd.print("No command...");
-      delay(1000);
-      lcd.noBacklight();
+    }else if (Serial.available()>=0) {
+    int temp = Serial.read();
+    if (temp == 'T') {
+    Serial.println(String(temp));
     }
   }
-
-
-
-  if (Serial.available()) {
-    char temp = Serial.read();
-    if (temp == 'T') {
-      digitalRead(analogRead(A0));
-    }}
-
-  
-
-
-}
+}}
