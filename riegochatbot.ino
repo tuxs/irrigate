@@ -3,7 +3,7 @@
 #include "RTClib.h"
 #include <LiquidCrystal_I2C.h> // Libreria LCD_I2C
 
-LiquidCrystal_I2C lcd(0x27,16,2); // si no sale con esta direccion  puedes usar (0x3f,16,2) || (0x27,16,2)  ||(0x20,16,2) 
+LiquidCrystal_I2C lcd(0x27, 16, 2); // si no sale con esta direccion  puedes usar (0x3f,16,2) || (0x27,16,2)  ||(0x20,16,2)
 
 // Variables pines
 const byte pinPulsador = 8;
@@ -19,8 +19,9 @@ byte contadorDias = 0;
 boolean centinelaHora = true;
 
 // Tiempo de riego
-const long duracionRiego =10000;// Cuánto tiempo riega en milisegundos
+const long duracionRiego = 10000; // Cuánto tiempo riega en milisegundos
 unsigned long marcaTiempo; // Marca de tiempo para contar los milisegundos
+int LimiteHumedo = 700;
 
 //Inicializamos variable para lectura del Button Light
 const int pinOn = 7;
@@ -31,15 +32,15 @@ void setup() {
   lcd.init();
   lcd.backlight();
   lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print("Sistema de Riego"); 
-  lcd.setCursor (0,1);
+  lcd.setCursor(0, 0);
+  lcd.print("Sistema de Riego");
+  lcd.setCursor (0, 1);
   lcd.print("  Automatizado");
   delay(4000);
   lcd.clear();
   delay(700);
-  lcd.noBacklight();  
-  
+  lcd.noBacklight();
+
   // Configuración comunicación serie
   Serial.begin(9600);
 
@@ -56,32 +57,32 @@ void setup() {
     while (1);
   }
 
-    // Ajuste de fecha y hora. Año/Mes/Dia - Hora/Minutos/Segundos
+  // Ajuste de fecha y hora. Año/Mes/Dia - Hora/Minutos/Segundos
   rtc.adjust(DateTime(2019, 5, 10, 12, 12, 00));
 }
 
 void loop() {
-  
+
   // Obtenemos la fecha
   DateTime tiempoReferencia = rtc.now();
-  
+
   //Lectura digital del pin boton consulta
   On = digitalRead(pinOn);
 
-    //mandar mensaje a puerto serie en función del valor leido
+  //mandar mensaje a puerto serie en función del valor leido
   if (On == LOW) {
-      lcd.backlight();
-      delay(500);
-      lcd.clear();
-      if(digitalRead(pinRele) == 0){      
+    lcd.backlight();
+    delay(500);
+    lcd.clear();
+    if (digitalRead(pinRele) == 0) {
       lcd.print("  Riego Apagado");
       delay(1000);
       lcd.clear();
-      lcd.setCursor(0,0);
+      lcd.setCursor(0, 0);
       lcd.print(" Temperatura: ");
-      lcd.setCursor(13,0);
+      lcd.setCursor(13, 0);
       lcd.print(analogRead(A0));
-      lcd.setCursor(2,1);
+      lcd.setCursor(2, 1);
       lcd.print("Hora:");
       lcd.print(tiempoReferencia.hour(), DEC);
       lcd.print(':');
@@ -92,16 +93,16 @@ void loop() {
       lcd.println();
       lcd.display();
       delay(2000);
-      }
-      else{
-        lcd.print(" Riego Encendido");
-        }
-      delay(10000);
-      lcd.noBacklight();
-      lcd.clear();
+    }
+    else {
+      lcd.print(" Riego Encendido");
+    }
+    delay(10000);
+    lcd.noBacklight();
+    lcd.clear();
   }
 
-  
+
   // Leer el pulsador
   byte estadoPulsador = digitalRead(pinPulsador);
 
@@ -109,51 +110,33 @@ void loop() {
   delay(300);
 
   // Comprobamos si se ha pulsado el pulsador
-  if (estadoPulsador == HIGH && analogRead(A0) <= 700) {
+  int SensorTierra = analogRead(A0);
+  if (estadoPulsador) {
     lcd.clear();
     lcd.backlight();
-    lcd.print(" Regando....");
-      
-    // Cambiamos de estado el relé
-    digitalWrite(pinRele, !digitalRead(pinRele));
+    if (SensorTierra <= LimiteHumedo) {
 
-    // Comenzamos a contar el tiempo
-    marcaTiempo = millis();
-  }
-  
-  if(estadoPulsador == HIGH && analogRead(A0) > 700){
-    lcd.clear();
-    lcd.backlight();
-    lcd.setCursor(0,0);
-    lcd.print(" Temperatura no");
-    lcd.setCursor(1,1);
-    lcd.print("Apta para Riego");
-    delay(3000);
-    lcd.noBacklight();
-    lcd.clear();
+      lcd.print(" Regando....");
+
+      // Cambiamos de estado el relé
+      digitalWrite(pinRele, !digitalRead(pinRele));
+
+      // Comenzamos a contar el tiempo
+      marcaTiempo = millis();
     }
+    else {
+      lcd.setCursor(0, 0);
+      lcd.print(" Temperatura no");
+      lcd.setCursor(1, 1);
+      lcd.print("Apta para Riego");
+      delay(3000);
+      lcd.noBacklight();
+      lcd.clear();
+    }
+  }
 
   // Mostramos la fecha por el monitor LCD
-  
-  //lcd.setCursor(0,0);
-  //lcd.print(" Fecha:");
-  //lcd.print(tiempoReferencia.day(), DEC);
-  //lcd.print('/');
-  //lcd.print(tiempoReferencia.month(), DEC);
-  //lcd.print('/');
-  //lcd.print(tiempoReferencia.year(), DEC);
-  //lcd.print(' ');
-  //lcd.setCursor(1,1);
-  //lcd.print("Hora:");
-  //lcd.print(tiempoReferencia.hour(), DEC);
-  //lcd.print(':');
-  //lcd.print(tiempoReferencia.minute(), DEC);
-  //lcd.print(':');
-  //lcd.print(tiempoReferencia.second(), DEC);
-  //lcd.print(' ');
-  //lcd.println();
 
- 
   // Si es la hora de regar
   if (tiempoReferencia.hour() == horaRiego && centinelaHora) {
     // Marcamos para que no vuelva a entrar
@@ -180,12 +163,12 @@ void loop() {
 
   // Si está regando
   if (digitalRead(pinRele)) {
-    
+
     // Protegemos para cuando se reinicie millis()
     if (millis() < marcaTiempo) {
       marcaTiempo = 0;
     }
-    
+
     // Comprobamos si ha pasado el tiempo
     if (millis() - marcaTiempo >= duracionRiego) {
       // Apagamos el riego
@@ -199,38 +182,18 @@ void loop() {
   }
 
 
-//Lectura de los LEDs
-  if(digitalRead(pinRele))
+  //Lectura de los LEDs
+  if (digitalRead(pinRele))
   {
     digitalWrite(4, HIGH);
     digitalWrite(2, LOW);
-    }
-    else{
-      digitalWrite(2, HIGH);
-      digitalWrite(4, LOW);
-      } 
-
-//DATOS DE COMUNICACION ENTRE TELEGRAM Y ARDUINO
-
-  //Recogemos datos del sensor y la procesamos
-  Temperatura = analogRead(A0);
-  gradosCentigrados = ((5*Temperatura*10)/1024);
-  //Serial.println(gradosCentigrados);
-
-/*  if (Serial.available()>=0) {
-    int temp = Serial.read();
-    if (temp == 'T') {
-    Serial.println(gradosCentigrados);
-    }
   }
-*/
- 
-
-//Codigo del Chatbot
-if(digitalRead(pinPulsador)){
-  Serial.println("H");
+  else {
+    digitalWrite(2, HIGH);
+    digitalWrite(4, LOW);
   }
-  
+
+  //Codigo del Chatbot
   if (Serial.available()) {
     char Letra = Serial.read();
     if (Letra == 'H') {
@@ -239,13 +202,39 @@ if(digitalRead(pinPulsador)){
       digitalWrite(2, LOW);
       lcd.clear();
       lcd.backlight();
-      lcd.setCursor(0,0);
+      lcd.setCursor(0, 0);
       lcd.print(" Regando....");
       delay(duracionRiego);
-    }else if (Serial.available()>=0) {
-    int temp = Serial.read();
-    if (temp == 'T') {
-    Serial.println(String(temp));
+    }
+    else if (Letra == 'T') {
+      //Enviar tmp a Nodejs
+      lcd.clear();
+      lcd.backlight();
+      lcd.setCursor(0, 0);
+      lcd.print("Enviando al Bot....");
+      delay(500);
+
+      Serial.print("M");//Inicio del paquete
+      if (SensorTierra <= LimiteHumedo) {
+        Serial.print("Humedo");
+      }
+      else {
+        Serial.print("Seco");
+      }
+      Serial.print("-");
+      Serial.print(tiempoReferencia.hour(), DEC);
+      Serial.print(':');
+      Serial.print(tiempoReferencia.minute(), DEC);
+      Serial.print(':');
+      Serial.print(tiempoReferencia.second(), DEC);
+      Serial.println("X");//Final del paquete
+    }
+    else {
+      lcd.backlight();
+      lcd.setCursor(0, 0);
+      lcd.print("No command...");
+      delay(1000);
+      lcd.noBacklight();
     }
   }
-}}
+}
