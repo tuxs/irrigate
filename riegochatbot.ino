@@ -194,6 +194,21 @@ void loop() {
   }
 
   //Codigo del Chatbot
+  if(digitalRead(pinPulsador)){
+  Serial.println("H");
+  }
+
+  if (millis() - marcaTiempo >= duracionRiego) {
+      // Apagamos el riego
+      digitalWrite(pinRele, LOW);
+      lcd.clear();
+      lcd.print("  Riego Apagado");
+      Serial.println("P");
+      delay(3000);
+      lcd.noBacklight();
+      lcd.clear();
+    }
+  
   if (Serial.available()) {
     char Letra = Serial.read();
     if (Letra == 'H') {
